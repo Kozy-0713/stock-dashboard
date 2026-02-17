@@ -1,11 +1,86 @@
-@import 'tailwindcss';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+body {
+  background-color: #f4f7f6;
+  font-family: sans-serif;
 }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.card .price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 10px 0;
+}
+.card.plus {
+  border-left: 5px solid #ef5350;
+}
+.card.plus .profit {
+  background: rgba(239, 83, 80, 0.1);
+  color: #ef5350;
+}
+.card.minus {
+  border-left: 5px solid #26a69a;
+}
+.card.minus .profit {
+  background: rgba(38, 166, 154, 0.1);
+  color: #26a69a;
+}
+.card {
+  transition: transform 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.profit {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.plus .profit {
+  background-color: rgba(239, 83, 80, 0.1);
+  color: #ef5350;
+}
+.minus .profit {
+  background-color: rgba(38, 166, 154, 0.1);
+  color: #26a69a;
+}
+
+.summary-header {
+  background: #fff;
+  padding: 30px;
+  margin-bottom: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+.summary-header .label {
+  display: block;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+.summary-header .value {
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+.summary-header .value.plus {
+  color: #ef5350;
+}
+.summary-header .value.minus {
+  color: #26a69a;
+}
+
