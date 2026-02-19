@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
+            $table->string('name');          // 銘柄名
+            $table->decimal('price', 15, 2); // 現在値
+            $table->integer('diff');         // 前日比などの損益
             $table->timestamps();
         });
     }
