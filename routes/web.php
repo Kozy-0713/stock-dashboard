@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\StockController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// 「/」にアクセスが来たら、StockControllerのindexメソッドを呼ぶ
+Route::get('/', [StockController::class, 'index']);
