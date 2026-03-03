@@ -11,4 +11,5 @@ Route::get('/stocks/create', [StockController::class, 'create']);
 // 2. フォームから送られたデータを保存する道（POST）
 Route::post('/stocks', [StockController::class, 'store']);
 // ...
-Route::delete('/stocks/{stock}', [StockController::class, 'destroy'])->name('stocks.destroy');
+// Route::delete('/stocks/{stock}', [StockController::class, 'destroy'])->name('stocks.destroy');
+Route::delete('/stocks/{id}', [StockController::class, 'destroy'])->name('stocks.destroy');
