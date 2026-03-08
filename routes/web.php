@@ -13,3 +13,6 @@ Route::post('/stocks', [StockController::class, 'store']);
 // ...
 // Route::delete('/stocks/{stock}', [StockController::class, 'destroy'])->name('stocks.destroy');
 Route::delete('/stocks/{id}', [StockController::class, 'destroy'])->name('stocks.destroy');
+
+Route::get('/stocks/{id}/edit', [StockController::class, 'edit'])->name('stocks.edit');
+Route::put('/stocks/{id}', [StockController::class, 'update'])->name('stocks.update');

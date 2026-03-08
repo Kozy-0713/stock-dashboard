@@ -25,8 +25,11 @@ class StockController extends Controller
         // 💡 合計損益を計算（配列の 'diff' カラムだけを抽出して合計）
         $totalDiff = array_sum(array_column($stocks, 'diff'));
 
+        // 💡 合計評価額（現在値の合計）を追加
+        $totalPrice = array_sum(array_column($stocks, 'price'));
+
         // Viewに合計値を渡す
-        return view('welcome', compact('stocks', 'totalDiff'));
+        return view('welcome', compact('stocks', 'totalDiff', 'totalPrice'));
 }
 
     public function create()
@@ -88,5 +91,39 @@ class StockController extends Controller
 
         // 3. インデックスを振り直して（念のため）Cookieを更新
         return redirect('/')->cookie('my_stocks', json_encode(array_values($filteredStocks)), 525600);
+    }
+
+    // 編集画面を表示
+    public function edit(Request $request, $id)
+    {
+        $cookieData = $request->cookie('my_stocks');
+        $stocks = $cookieData ? json_decode($cookieData, true) : [];
+
+        // IDが一致するデータを探す
+        $stock = collect($stocks)->firstWhere('id', $id);
+
+        if (!$stock) {
+            return redirect('/')->with('error', '銘柄が見つかりませんでした。');
+        }
+
+        return view('stocks.edit', compact('stock'));
+    }
+
+    // データを更新
+    public function update(StoreStockRequest $request, $id) // バリデーションは登録時と同じものを使える！
+    {
+        $cookieData = $request->cookie('my_stocks');
+        $stocks = $cookieData ? json_decode($cookieData, true) : [];
+
+        // 対象のデータを書き換える
+        foreach ($stocks as &$stock) {
+            if ($stock['id'] === $id) {
+                $stock['name'] = $request->name;
+                $stock['price'] = (float)$request->price;
+                $stock['diff'] = (int)$request->diff;
+            }
+        }
+
+        return redirect('/')->cookie('my_stocks', json_encode($stocks), 525600);
     }
 }
