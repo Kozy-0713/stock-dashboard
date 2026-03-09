@@ -16,3 +16,4 @@ Route::delete('/stocks/{id}', [StockController::class, 'destroy'])->name('stocks
 
 Route::get('/stocks/{id}/edit', [StockController::class, 'edit'])->name('stocks.edit');
 Route::put('/stocks/{id}', [StockController::class, 'update'])->name('stocks.update');
+Route::post('/stocks/refresh', [StockController::class, 'refreshPrices'])->name('stocks.refresh');

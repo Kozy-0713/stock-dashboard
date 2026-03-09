@@ -17,8 +17,9 @@ class StoreStockRequest extends FormRequest
     {
         return [
             'name' => 'required|max:20',
-            'price' => 'required|numeric|min:0',
-            'diff' => 'required|integer',
+            'code' => 'required|string|max:10',
+            'buy_price' => 'required|numeric|min:0', // 取得単価
+            'quantity' => 'required|numeric|min:1',  // 株数
         ];
     }
 

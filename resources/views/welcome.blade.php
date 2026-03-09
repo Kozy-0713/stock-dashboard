@@ -65,6 +65,28 @@
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
             </style>
         </div>
+        <div class="mb-4 flex justify-end">
+        <form action="{{ route('stocks.refresh') }}" method="POST" onsubmit="disableRefreshButton(this)">
+            @csrf
+            <button type="submit" id="refreshButton" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm">
+                <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span id="refreshButtonText">最新価格に更新</span>
+            </button>
+        </form>
+        </div>
+        <script>
+            function disableRefreshButton(form) {
+                const btn = document.getElementById('refreshButton');
+                const icon = document.getElementById('refreshIcon');
+                const text = document.getElementById('refreshButtonText');
+
+                btn.disabled = true;
+                text.innerText = '更新中...';
+                icon.classList.add('animate-spin'); // アイコンを回転させる
+            }
+        </script>
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">My Dashboard</h1>
             <a href="/stocks/create" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
@@ -72,10 +94,24 @@
             </a>
         </div>
 
-        {{-- 保存完了メッセージ --}}
-        @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-                {{ session('success') }}
+        {{-- メッセージ表示エリア（成功・通知・警告） --}}
+        @if(session('success') || session('status') || session('error'))
+            <div class="mb-6 px-4 py-3 rounded-xl font-bold shadow-sm flex items-center gap-2 
+                {{ session('error') ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-blue-50 border border-blue-200 text-blue-700' }}">
+                
+                @if(session('error'))
+                    {{-- エラーアイコン --}}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                @else
+                    {{-- 成功アイコン --}}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                @endif
+
+                <span>{{ session('success') ?? session('status') ?? session('error') }}</span>
             </div>
         @endif
 
