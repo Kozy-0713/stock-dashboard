@@ -24,6 +24,11 @@ COPY --from=composer_build /app/vendor /var/www/html/vendor
 # 全ファイルをコピー
 COPY . /var/www/html
 
+
+# 空のSQLiteファイルを作成し、権限を与える（これを追加！）
+RUN touch /var/www/html/database/database.sqlite
+RUN chown www-data:www-data /var/www/html/database/database.sqlite
+
 # 本番環境用に最適化（ここで改めて Discover する）
 RUN php artisan package:discover --ansi
 
