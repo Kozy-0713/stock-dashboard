@@ -1,15 +1,19 @@
-# --- Stage 1: Build PHP dependencies ---
-FROM composer:2 AS composer_build
-
+# --- Stage 1: PHP & Node.js のビルド ---
+FROM composer:2 AS build_stage
 WORKDIR /app
 
-# composer.lock がなくても動くようにワイルドカードを使用
-COPY composer.json composer.loc[k] ./
+# すべてのファイルをコピー（package.json や vite.config.js が必要）
+COPY . .
 
-# --no-scripts を追加して、Laravelの自動実行(Discoverなど)を禁止する
+# 1. PHPの依存関係インストール
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --ignore-platform-reqs --no-scripts
 
-# --- Stage 2: Production image ---
+# 2. Node.js をインストールして Vite でビルド
+RUN apk add --no-cache nodejs npm \
+    && npm install \
+    && npm run build
+
+# --- Stage 2: 本番用イメージ ---
 FROM php:8.3-apache
 
 RUN apt-get update && apt-get install -y \
@@ -19,24 +23,19 @@ RUN apt-get update && apt-get install -y \
 
 RUN a2enmod rewrite
 
-# Stage 1 で作った vendor をコピー
-COPY --from=composer_build /app/vendor /var/www/html/vendor
-# 全ファイルをコピー
+# Stage 1 から vendor と public/build（Viteの成果物）をコピー
+COPY --from=build_stage /app/vendor /var/www/html/vendor
+COPY --from=build_stage /app/public/build /var/www/html/public/build
 COPY . /var/www/html
 
-
-# 空のSQLiteファイルを作成し、権限を与える（これを追加！）
-RUN touch /var/www/html/database/database.sqlite
-RUN chown www-data:www-data /var/www/html/database/database.sqlite
-
-# 本番環境用に最適化（ここで改めて Discover する）
-RUN php artisan package:discover --ansi
-
+# Apacheの設定
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
+# 権限付与
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
 RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/memory-limit.ini
 
 EXPOSE 80
