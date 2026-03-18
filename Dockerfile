@@ -6,8 +6,8 @@ WORKDIR /app
 # composer.lock がなくても動くようにワイルドカードを使用
 COPY composer.json composer.loc[k] ./
 
-# --ignore-platform-reqs を追加（PHPバージョンや拡張の厳密なチェックを無視）
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --ignore-platform-reqs
+# --no-scripts を追加して、Laravelの自動実行(Discoverなど)を禁止する
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --ignore-platform-reqs --no-scripts
 
 # --- Stage 2: Production image ---
 FROM php:8.3-apache
@@ -19,8 +19,13 @@ RUN apt-get update && apt-get install -y \
 
 RUN a2enmod rewrite
 
+# Stage 1 で作った vendor をコピー
 COPY --from=composer_build /app/vendor /var/www/html/vendor
+# 全ファイルをコピー
 COPY . /var/www/html
+
+# 本番環境用に最適化（ここで改めて Discover する）
+RUN php artisan package:discover --ansi
 
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
