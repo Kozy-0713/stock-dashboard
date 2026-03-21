@@ -39,12 +39,15 @@ class StockPriceService
     // }
     public function getLatestPrice(string $symbol)
     {
+        // LaravelのLogクラスを通さず、PHPの標準エラー出力に直接叩き込む
+        error_log("--- DEBUG START: fetching {$symbol} ---");
         $response = Http::get("https://www.alphavantage.co/query", [
             'function' => 'GLOBAL_QUOTE',
             'symbol' => $symbol,
             'apikey' => $this->apiKey,
         ]);
-
+        dd($response);
+        error_log("--- DEBUG RESPONSE: " . $response->status() . " ---");
         if ($response->successful()) {
             $data = $response->json();
 
