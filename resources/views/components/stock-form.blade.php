@@ -1,6 +1,6 @@
 @props(['stock' => null]) {{-- 新規の時は空、編集の時はデータが入る --}}
 
-<div class="space-y-6">
+<div class="space-y-6 mb-3">
     {{-- 銘柄名 --}}
     <div>
         <label for="name" class="block text-sm font-bold text-gray-700 mb-2">銘柄名</label>
