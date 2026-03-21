@@ -9,12 +9,6 @@ use App\Services\StockPriceService;
 
 class StockController extends Controller
 {
-    // public function index()
-    // {
-    //     $stocks = Stock::all();
-
-    //     return view('welcome', compact('stocks'));
-    // }
     public function index(Request $request)
     {
         // 1. CookieからJSON文字列を取得
@@ -38,26 +32,6 @@ class StockController extends Controller
         return view('stocks.create');
     }
 
-    // public function store(Request $request)
-    // {
-    //     // ここでバリデーション！
-    //     $request->validate([
-    //         'name' => 'required|max:20', // 必須、最大20文字
-    //         'price' => 'required|numeric|min:0', // 必須、数値、0以上
-    //         'diff' => 'required|integer', // 必須、整数
-    //     ], [
-    //         // カスタムメッセージ（日本語化）
-    //         'name.required' => '銘柄名は必ず入力してください。',
-    //         'name.max' => '銘柄名は20文字以内で入力してください。',
-    //         'price.required' => '価格を入力してください。',
-    //         'price.numeric' => '価格は数値で入力してください。',
-    //     ]);
-
-    //     // バリデーションを通ったときだけ、下の処理が進む
-    //     Stock::create($request->all());
-
-    //     return redirect('/')->with('success', '銘柄を登録しました！');
-    // }
     public function store(StoreStockRequest $request)
     {
         // 1. 今のデータを取得
