@@ -46,7 +46,6 @@ class StockPriceService
             'symbol' => $symbol,
             'apikey' => $this->apiKey,
         ]);
-        dd($response);
         error_log("--- DEBUG RESPONSE: " . $response->status() . " ---");
         if ($response->successful()) {
             $data = $response->json();
