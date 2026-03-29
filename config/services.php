@@ -38,4 +38,8 @@ return [
     'alphavantage' => [
         'key' => env('ALPHA_VANTAGE_KEY'),
     ],
+
+    'jquants' => [
+        'api_key' => env('JQUANTS_API_KEY'),
+    ],
 ];
