@@ -42,4 +42,8 @@ return [
     'jquants' => [
         'api_key' => env('JQUANTS_API_KEY'),
     ],
+
+    'fmp' => [
+        'key' => env('FMP_API_KEY'),
+    ],
 ];
