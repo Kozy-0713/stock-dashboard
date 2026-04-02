@@ -1,63 +1,66 @@
-<<<<<<< HEAD
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Stock Dashboard (米国株ポートフォリオ管理システム)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 概要
 
-## About Laravel
+サーバー側に個人情報や資産データを一切保存せず、ブラウザの `localStorage` を活用して銘柄の管理や損益計算を行うSPAベースのポートフォリオ管理システムです。
+バックエンドのLaravelは、APIキーを秘匿しつつ最新の株価・為替データを取得するためのプロキシサーバーとして動作します。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 主な機能
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **銘柄管理**: ティッカーシンボル、取得単価（USD）、保有数量の登録・編集・削除
+- **株価・為替データ取得**: 外部APIを利用した複数銘柄のリアルタイム株価取得および為替レート取得
+- **損益表示**: 銘柄ごとの現在価格、評価額、評価損益、損益率の計算
+- **ポートフォリオ集計**: ポートフォリオ全体の総評価額、総損益の合算表示
+- **為替対応**: JPY(円)ベース・USD(ドル)ベースの両方での資産算出・表示
+- **資産配分の可視化**: Chart.jsを用いた円グラフ(Pie Chart)等でのポートフォリオ内訳表示
+- **履歴管理**: `localStorage` を活用した簡易的な資産推移の保持とグラフ表示
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 技術スタック
 
-## Learning Laravel
+- **フロントエンド**: HTML (Blade), Alpine.js, Tailwind CSS, Chart.js
+- **バックエンド**: PHP, Laravel 12 (APIプロキシとしてのみ使用するStateless構成)
+- **外部API**: Financial Modeling Prep API
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## ローカル環境の構築
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+以下の手順で開発環境をセットアップできます。
 
-## Laravel Sponsors
+```bash
+# 1. リポジトリのクローン
+git clone <repository_url>
+cd stock-app
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 2. PHPおよびNode.jsの依存関係をインストール
+composer install
+npm install
 
-### Premium Partners
+# 3. 環境変数の設定準備
+cp .env.example .env
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 4. アプリケーションキーの生成
+php artisan key:generate
 
-## Contributing
+# 5. アセットのビルドと開発サーバーの起動
+npm run dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 必要な環境変数設定
+APIからデータを取得するために、`.env` ファイルにFinancial Modeling PrepのAPIキーを設定してください。
 
-## Code of Conduct
+```env
+FMP_API_KEY=your_financial_modeling_prep_api_key
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 非機能・セキュリティ
 
-## Security Vulnerabilities
+- **パフォーマンス**: 初回表示は即時に `localStorage` のデータを反映し、API通信はバックグラウンドの非同期で行います。
+- **可用性**: API通信が失敗した場合でも、ローカルのキャッシュデータを用いて画面表示を継続します。
+- **セキュリティ**: 個人のポートフォリオ情報はサーバーに送信・保存されません。外部APIを叩くためのトークンはサーバー側（Laravel）で秘匿化しています。
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 開発対象外（スコープ外）の機能
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-=======
-# stock-dashboard
->>>>>>> a06793e82b87c2470796ab69138e2370611bd70e
+本プロジェクトでは以下の機能はスコープ外としています。
+- ユーザー認証（ログイン機能）
+- サーバー（DB等）でのデータ永続化
+- WebSocket等による高頻度なリアルタイム更新
+- 日本株など米国株以外の銘柄の取得
