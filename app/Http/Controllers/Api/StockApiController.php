@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class StockApiController extends Controller
 {
@@ -21,35 +22,52 @@ class StockApiController extends Controller
         }
 
         // FMP APIキーを.envから取得
-        // FMP_API_KEY=xxx を設定してください
         $apiKey = env('FMP_API_KEY', config('services.fmp.key'));
 
         if (!$apiKey) {
             return response()->json(['error' => 'API Key not configured'], 500);
         }
 
-        try {
-            // FMP APIを呼び出し（複数銘柄一括）
-            $response = Http::get("https://financialmodelingprep.com/stable/quote/", [
-                'symbol' => $symbols,
-                'apikey' => $apiKey,
-            ]);
+        $symbolsArray = array_filter(array_map('trim', explode(',', $symbols)));
+        $results = [];
 
-            if ($response->successful()) {
-                return response()->json($response->json());
+        foreach ($symbolsArray as $symbol) {
+            $cacheKey = 'fmp_price_' . $symbol;
+
+            try {
+                // 1銘柄ごとに2時間キャッシュ (120分)
+                $data = Cache::remember($cacheKey, now()->addHours(2), function () use ($symbol, $apiKey) {
+                    $response = Http::get("https://financialmodelingprep.com/stable/quote/", [
+                        'symbol' => $symbol,
+                        'apikey' => $apiKey,
+                    ]);
+
+                    if ($response->successful()) {
+                        $json = $response->json();
+                        // 1件分の配列が返ってくるはずなので、それを返す
+                        if (is_array($json) && count($json) > 0) {
+                            return $json[0];
+                        }
+                    }
+
+                    Log::error("FMP API Error for {$symbol}", [
+                        'status' => $response->status(),
+                        'body' => $response->body()
+                    ]);
+
+                    throw new \Exception("Failed to fetch price for {$symbol}");
+                });
+                
+                if ($data) {
+                    $results[] = $data;
+                }
+            } catch (\Exception $e) {
+                Log::error("FMP Connection Error for {$symbol}", ['exception' => $e->getMessage()]);
+                // エラーの場合はその銘柄はスキップして次へ
             }
-
-            Log::error('FMP API Error', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
-
-            return response()->json(['error' => 'Failed to fetch prices from API'], 502);
-
-        } catch (\Exception $e) {
-            Log::error('FMP Connection Error', ['exception' => $e->getMessage()]);
-            return response()->json(['error' => 'Connection error'], 500);
         }
+
+        return response()->json($results);
     }
 
     /**
@@ -64,20 +82,25 @@ class StockApiController extends Controller
         }
 
         try {
-            $response = Http::get('https://financialmodelingprep.com/stable/quote/', [
-                'symbol' => 'USDJPY',
-                'apikey' => $apiKey,
-            ]);
+            // 12時間キャッシュ
+            $rate = Cache::remember('fmp_exchange_rate_USDJPY', now()->addHours(12), function () use ($apiKey) {
+                $response = Http::get('https://financialmodelingprep.com/stable/quote/', [
+                    'symbol' => 'USDJPY',
+                    'apikey' => $apiKey,
+                ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                // FMPのレスポンスは配列で返る： [{"symbol":"USDJPY", "price":150.5...}]
-                if (is_array($data) && count($data) > 0 && isset($data[0]['price'])) {
-                    return response()->json(['rate' => (float) $data[0]['price']]);
+                if ($response->successful()) {
+                    $data = $response->json();
+                    // FMPのレスポンスは配列で返る： [{"symbol":"USDJPY", "price":150.5...}]
+                    if (is_array($data) && count($data) > 0 && isset($data[0]['price'])) {
+                        return (float) $data[0]['price'];
+                    }
                 }
-            }
 
-            return response()->json(['error' => 'Failed to fetch exchange rate'], 502);
+                throw new \Exception('Failed to fetch exchange rate');
+            });
+
+            return response()->json(['rate' => $rate]);
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Connection error'], 500);

@@ -13,27 +13,30 @@
                 最新為替レート: 1 USD = <span x-text="exchangeRate.toFixed(2)"></span> JPY
             </p>
         </div>
-        <div class="flex flex-wrap gap-3">
-            {{-- 通貨切替トグル --}}
-            <button @click="toggleCurrency()" class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 font-bold py-2.5 px-4 rounded-full shadow-sm transition-all text-sm">
-                <span x-show="currency === 'JPY'">🇯🇵 JPY表示中</span>
-                <span x-show="currency === 'USD'">🇺🇸 USD表示中</span>
-                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-            </button>
-            
-            <button @click="fetchData()" :disabled="isRefreshing || stocks.length === 0" class="flex items-center gap-2 bg-white border border-gray-200 text-indigo-600 hover:bg-indigo-50 focus:ring-4 focus:ring-indigo-100 font-bold py-2.5 px-4 rounded-full shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm">
-                <svg :class="{'animate-spin': isRefreshing}" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span x-text="isRefreshing ? '取得中...' : '最新価格をAPIから取得'"></span>
-            </button>
-            
-            <button @click="openModal()" class="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold py-2.5 px-5 rounded-full shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-0.5 text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                新規銘柄
-            </button>
+        <div class="flex flex-col md:items-end gap-1.5">
+            <div class="flex flex-wrap md:justify-end gap-3">
+                {{-- 通貨切替トグル --}}
+                <button @click="toggleCurrency()" class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 font-bold py-2.5 px-4 rounded-full shadow-sm transition-all text-sm">
+                    <span x-show="currency === 'JPY'">🇯🇵 JPY表示中</span>
+                    <span x-show="currency === 'USD'">🇺🇸 USD表示中</span>
+                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                </button>
+                
+                <button @click="fetchData()" :disabled="isRefreshing || stocks.length === 0" class="flex items-center gap-2 bg-white border border-gray-200 text-indigo-600 hover:bg-indigo-50 focus:ring-4 focus:ring-indigo-100 font-bold py-2.5 px-4 rounded-full shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                    <svg :class="{'animate-spin': isRefreshing}" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span x-text="isRefreshing ? '取得中...' : '最新価格を再取得'"></span>
+                </button>
+                
+                <button @click="openModal()" class="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold py-2.5 px-5 rounded-full shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-0.5 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    新規銘柄
+                </button>
+            </div>
+            <p class="text-[10px] text-gray-400 opacity-90 pl-1 md:pr-1">※データはキャッシュされるためリアルタイムではありません（更新目安: 株価 2時間 / 為替 12時間）</p>
         </div>
     </div>
 
@@ -188,7 +191,13 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1">ティッカー/コード (USDベース想定)</label>
-                    <input type="text" x-model="form.code" required class="w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm shadow-sm transition uppercase" placeholder="AAPL">
+                    <select x-model="form.code" required class="w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm shadow-sm transition uppercase">
+                        <option value="" disabled>選択してください</option>
+                        @foreach(config('constants.enable_symbols', []) as $symbol)
+                            <option value="{{ $symbol }}">{{ $symbol }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-[10.5px] text-amber-600 mt-1.5 font-medium">※試験運用中のため、登録可能な銘柄は限定されています</p>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
