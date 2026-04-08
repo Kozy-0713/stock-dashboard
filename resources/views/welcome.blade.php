@@ -121,10 +121,16 @@
         <template x-for="stock in stocks" :key="stock.id">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-300 relative group flex flex-col">
                 <div class="absolute top-3 right-3 flex opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
-                    <button @click="openModal(stock)" class="p-1.5 text-gray-400 hover:text-indigo-600 bg-white shadow-sm hover:bg-indigo-50 border border-gray-100 rounded-full transition">
+                    <button @click="openAlertsModal(stock.code)" class="p-1.5 text-gray-400 bg-white shadow-sm border border-gray-100 rounded-full transition" :class="alerts.some(a => a.symbol === stock.code && a.enabled) ? 'text-amber-500 bg-amber-50 border-amber-200' : 'hover:text-amber-500 hover:bg-amber-50'" title="アラート設定">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                    </button>
+                    <button @click="openNotesModal(stock.code)" class="p-1.5 text-gray-400 bg-white shadow-sm border border-gray-100 rounded-full transition" :class="tradeNotes[stock.code] && (tradeNotes[stock.code].buy_thesis || tradeNotes[stock.code].exit_rule || tradeNotes[stock.code].risk_note) ? 'text-blue-500 bg-blue-50 border-blue-200' : 'hover:text-blue-500 hover:bg-blue-50'" title="売買メモ">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    </button>
+                    <button @click="openModal(stock)" class="p-1.5 text-gray-400 hover:text-indigo-600 bg-white shadow-sm hover:bg-indigo-50 border border-gray-100 rounded-full transition" title="編集">
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     </button>
-                    <button @click="deleteStock(stock.id)" class="p-1.5 text-gray-400 hover:text-rose-600 bg-white shadow-sm hover:bg-rose-50 border border-gray-100 rounded-full transition">
+                    <button @click="deleteStock(stock.id)" class="p-1.5 text-gray-400 hover:text-rose-600 bg-white shadow-sm hover:bg-rose-50 border border-gray-100 rounded-full transition" title="削除">
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 </div>
@@ -219,6 +225,76 @@
             </form>
         </div>
     </div>
+    {{-- Alerts Modal --}}
+    <div x-show="alertsModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0" style="display: none;">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeAlertsModal()"></div>
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full relative z-10 p-6">
+            <button @click="closeAlertsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1.5 bg-gray-50 rounded-full hover:bg-gray-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+            <h3 class="text-xl font-bold text-gray-800 mb-5">アラート設定 <span class="text-sm text-gray-500 ml-1" x-text="alertsEditingSymbol"></span></h3>
+            <form @submit.prevent="saveAlert" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">通知条件</label>
+                    <select x-model="alertForm.condition_type" class="w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm">
+                        <option value="above">現在値が設定価格【以上】</option>
+                        <option value="below">現在値が設定価格【以下】</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">目標価格 (USD)</label>
+                    <input type="number" step="0.0001" x-model.number="alertForm.threshold" required class="w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm shadow-sm transition">
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="alertEnabled" x-model="alertForm.enabled" class="rounded text-indigo-600 focus:ring-indigo-500">
+                    <label for="alertEnabled" class="text-xs font-bold text-gray-700">アラートを有効にする</label>
+                </div>
+                <div class="pt-2 flex gap-2">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 px-4 rounded-xl shadow-md text-sm">保存</button>
+                    <button type="button" @click="deleteAlert(alertsEditingSymbol)" x-show="alerts.some(a => a.symbol === alertsEditingSymbol)" class="bg-gray-100 hover:bg-red-50 text-red-500 font-bold py-3 px-4 rounded-xl text-sm">削除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Notes Modal --}}
+    <div x-show="notesModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0" style="display: none;">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeNotesModal()"></div>
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full relative z-10 p-6">
+            <button @click="closeNotesModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1.5 bg-gray-50 rounded-full hover:bg-gray-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+            <h3 class="text-xl font-bold text-gray-800 mb-5">売買ルールメモ <span class="text-sm text-gray-500 ml-1" x-text="notesEditingSymbol"></span></h3>
+            <form @submit.prevent="saveNotes" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">買い理由 (Buy Thesis)</label>
+                    <textarea x-model="noteForm.buy_thesis" rows="2" class="w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm" placeholder="AI分野での成長期待など"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">売却条件 (Exit Rule)</label>
+                    <textarea x-model="noteForm.exit_rule" rows="2" class="w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm" placeholder="成長率が10%を割ったら売却など"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">リスク・その他 (Risk Note)</label>
+                    <textarea x-model="noteForm.risk_note" rows="2" class="w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm" placeholder="為替リスクありなど"></textarea>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md text-sm">保存する</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Toasts Container --}}
+    <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div class="min-w-[250px] bg-white rounded-xl shadow-xl border-l-4 p-4 flex items-start gap-3 pointer-events-auto transition-all animate-fade-in"
+                 :class="toast.type === 'warning' ? 'border-amber-500' : 'border-indigo-500'">
+                <div class="flex-grow">
+                    <p class="text-sm font-bold text-gray-800" x-text="toast.message"></p>
+                </div>
+                <button @click="removeToast(toast.id)" class="text-gray-400 hover:text-gray-600 shrink-0">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+        </template>
+    </div>
 </div>
 
 <style>
@@ -240,6 +316,21 @@ document.addEventListener('alpine:init', () => {
         currency: localStorage.getItem('my_currency') || 'JPY',
         exchangeRate: parseFloat(localStorage.getItem('my_exchange_rate')) || 150.0,
         form: { name: '', code: '', buy_price: '', quantity: '' },
+        
+        alerts: JSON.parse(localStorage.getItem('stock_alerts')) || [],
+        notifiedAlertIds: [],
+        alertsModalOpen: false,
+        alertsEditingSymbol: null,
+        alertForm: { condition_type: 'above', threshold: '', enabled: true },
+        
+        tradeNotes: JSON.parse(localStorage.getItem('stock_trade_notes')) || {},
+        notesModalOpen: false,
+        notesEditingSymbol: null,
+        noteForm: { buy_thesis: '', exit_rule: '', risk_note: '' },
+        
+        earnings: JSON.parse(sessionStorage.getItem('stock_earnings')) || {},
+        
+        toasts: [],
         pieChart: null,
         lineChart: null,
         
@@ -287,6 +378,12 @@ document.addEventListener('alpine:init', () => {
                 localStorage.setItem('my_history', JSON.stringify(val));
                 this.updateCharts();
             });
+            this.$watch('alerts', val => {
+                localStorage.setItem('stock_alerts', JSON.stringify(val));
+            });
+            this.$watch('tradeNotes', val => {
+                localStorage.setItem('stock_trade_notes', JSON.stringify(val));
+            });
             setTimeout(() => {
                 this.initPieChart();
                 this.initLineChart();
@@ -300,7 +397,7 @@ document.addEventListener('alpine:init', () => {
         async fetchData() {
             this.isRefreshing = true;
             try {
-                // 両方のAPIを並列実行
+                // APIを並列実行
                 await Promise.all([this.fetchPrices(), this.fetchExchangeRate()]);
                 alert('データを最新化しました。');
             } finally {
@@ -325,6 +422,8 @@ document.addEventListener('alpine:init', () => {
                         }
                         return { ...stock, price: newPrice };
                     });
+                    // アラートのチェックを実行
+                    this.checkAlerts();
                 } else if (data.error) {
                     console.error('API Error:', data.error);
                 }
@@ -344,6 +443,107 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Failed to fetch exchange rate', error);
             }
+        },
+
+        showToast(message, type = 'info') {
+            const id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+            this.toasts.push({ id, message, type });
+            setTimeout(() => {
+                this.toasts = this.toasts.filter(t => t.id !== id);
+            }, 5000);
+        },
+        
+        removeToast(id) {
+            this.toasts = this.toasts.filter(t => t.id !== id);
+        },
+
+        checkAlerts() {
+            this.alerts.forEach(alert => {
+                if (!alert.enabled) return;
+                if (this.notifiedAlertIds.includes(alert.id)) return;
+                
+                const stock = this.stocks.find(s => s.code === alert.symbol);
+                if (!stock) return;
+                
+                const currentPrice = stock.price;
+                const threshold = parseFloat(alert.threshold);
+                let triggered = false;
+                
+                if (alert.condition_type === 'above' && currentPrice >= threshold) {
+                    triggered = true;
+                } else if (alert.condition_type === 'below' && currentPrice <= threshold) {
+                    triggered = true;
+                }
+                
+                if (triggered) {
+                    this.notifiedAlertIds.push(alert.id);
+                    alert.last_triggered_at = new Date().toISOString();
+                    const message = `${alert.symbol}が目標価格(${alert.condition_type === 'above' ? '以上' : '以下'}: $${threshold})に到達しました！`;
+                    this.showToast(message, 'warning');
+                }
+            });
+            this.alerts = [...this.alerts];
+        },
+
+        openAlertsModal(symbol) {
+            this.alertsEditingSymbol = symbol;
+            const existing = this.alerts.find(a => a.symbol === symbol) || { condition_type: 'above', threshold: '', enabled: true };
+            this.alertForm = { ...existing };
+            this.alertsModalOpen = true;
+        },
+
+        closeAlertsModal() {
+            this.alertsModalOpen = false;
+        },
+
+        saveAlert() {
+            if (!this.alertForm.threshold) return;
+            const idx = this.alerts.findIndex(a => a.symbol === this.alertsEditingSymbol);
+            const alertData = {
+                id: this.alertForm.id || Date.now().toString(),
+                symbol: this.alertsEditingSymbol,
+                condition_type: this.alertForm.condition_type,
+                threshold: parseFloat(this.alertForm.threshold),
+                enabled: this.alertForm.enabled !== undefined ? this.alertForm.enabled : true,
+                last_triggered_at: this.alertForm.last_triggered_at || null
+            };
+            
+            if (idx !== -1) {
+                this.alerts[idx] = alertData;
+            } else {
+                this.alerts.push(alertData);
+            }
+            
+            this.notifiedAlertIds = this.notifiedAlertIds.filter(id => id !== alertData.id);
+            this.alerts = [...this.alerts];
+            this.alertsModalOpen = false;
+        },
+        
+        deleteAlert(symbol) {
+            if(confirm('アラート設定を削除しますか？')) {
+                this.alerts = this.alerts.filter(a => a.symbol !== symbol);
+                this.alertsModalOpen = false;
+            }
+        },
+
+        openNotesModal(symbol) {
+            this.notesEditingSymbol = symbol;
+            const existing = this.tradeNotes[symbol] || { buy_thesis: '', exit_rule: '', risk_note: '' };
+            this.noteForm = { ...existing };
+            this.notesModalOpen = true;
+        },
+
+        closeNotesModal() {
+            this.notesModalOpen = false;
+        },
+
+        saveNotes() {
+            this.tradeNotes[this.notesEditingSymbol] = {
+                ...this.noteForm,
+                updated_at: new Date().toISOString()
+            };
+            this.tradeNotes = { ...this.tradeNotes };
+            this.notesModalOpen = false;
         },
 
         openModal(stock = null) {
